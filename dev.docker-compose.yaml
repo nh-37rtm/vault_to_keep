@@ -1,0 +1,24 @@
+# lance un serveur postgres utilisable pour le dev
+# la persistence se fait sur le dossier 
+version: '3'
+
+services:
+  vault-server:
+    image: hashicorp/vault:1.15
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_ADDR: "http://0.0.0.0:8200"
+      #VAULT_API_ADDR: "http://0.0.0.0:8201"
+      VAULT_DEV_ROOT_TOKEN_ID: "vault-plaintext-root-token"
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - type: bind
+        source: ./config/dev.vault
+        target: /vault/config/
+
+    networks:
+      default:
+        aliases:
+          - vault-server
