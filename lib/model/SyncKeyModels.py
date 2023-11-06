@@ -25,6 +25,22 @@ class SyncKeyModel(BaseModel):
     last_modification_time: int = 0
     data: dict = dict()
 
+
+    def __eq__(self, obj_compare: 'SyncKeyModel'):
+        
+        equals: bool = False
+
+        equals = self.name == obj_compare.name \
+            and self.full_path == obj_compare.full_path
+
+        if equals:
+            for key, value in self.data.items():
+                if obj_compare.data[key] != value:
+                    equals = False
+                    break
+
+        return equals
+            
     @classmethod
     def from_keepass(class_name, entry: KeePassEntry) -> 'SyncKeyModel':
         self = SyncKeyModel(full_path=  '/' + '/'.join(entry.path))
@@ -32,11 +48,11 @@ class SyncKeyModel(BaseModel):
         self.name = entry.title
 
         for field_name in  keepass_default_fields:
-            logging.info('extracting key %s from keypass file ...', field_name)
+            logging.debug('extracting key %s from keypass file ...', field_name)
             self.data[field_name] = getattr( entry, field_name)
 
         for key, value in entry.custom_properties.items():
-            logging.info('extracting custom key %s from keypass file ...', key)
+            logging.debug('extracting custom key %s from keypass file ...', key)
             self.data[key] = value
 
 
@@ -45,10 +61,12 @@ class SyncKeyModel(BaseModel):
 
     def to_keepass(self, entry: KeePassEntry):
 
+        self.exists_in_keepass = True
         for field_name, field_value in self.data.items():
             if field_name in keepass_default_fields:
-                logging.info('extracting key %s from keypass file ...', field_name)
-                setattr(entry, field_name)
+                logging.debug('extracting key %s from keypass file ...', field_name)
+                if field_value is not None:
+                    setattr(entry, field_name, field_value)
             else:
                 entry.custom_properties[field_name] = field_value
          
